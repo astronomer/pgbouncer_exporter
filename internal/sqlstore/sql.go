@@ -37,6 +37,7 @@ type database struct {
 	PoolSize           int64
 	MinPoolSize        int64
 	ReservePool        int64
+	ServerLifetime     int64
 	PoolMode           sql.NullString
 	MaxConnections     int64
 	CurrentConnections int64
@@ -71,12 +72,14 @@ func (s *Store) GetStats(ctx context.Context) ([]domain.Stat, error) {
 	var stats []domain.Stat
 
 	for rows.Next() {
-		dest := make([]interface{}, 0, len(columns))
+		dest := make([]any, 0, len(columns))
 
 		for _, column := range columns {
 			switch column {
 			case "database":
 				dest = append(dest, &row.Database)
+			case "total_server_assignment_count":
+				dest = append(dest, &row.TotalServerAssignmentCount)
 			case "total_xact_count":
 				dest = append(dest, &row.TotalXactCount)
 			case "total_query_count":
@@ -91,6 +94,8 @@ func (s *Store) GetStats(ctx context.Context) ([]domain.Stat, error) {
 				dest = append(dest, &row.TotalQueryTime)
 			case "total_wait_time":
 				dest = append(dest, &row.TotalWaitTime)
+			case "avg_server_assignment_count":
+				dest = append(dest, &row.AverageServerAssignmentCount)
 			case "avg_xact_count":
 				dest = append(dest, &row.AverageXactCount)
 			case "avg_query_count":
@@ -140,7 +145,7 @@ func (s *Store) GetPools(ctx context.Context) ([]domain.Pool, error) {
 	var pools []pool
 
 	for rows.Next() {
-		dest := make([]interface{}, 0, len(columns))
+		dest := make([]any, 0, len(columns))
 
 		for _, column := range columns {
 			switch column {
@@ -232,7 +237,7 @@ func (s *Store) GetDatabases(ctx context.Context) ([]domain.Database, error) {
 	var databases []database
 
 	for rows.Next() {
-		dest := make([]interface{}, 0, len(columns))
+		dest := make([]any, 0, len(columns))
 
 		for _, column := range columns {
 			switch column {
@@ -252,6 +257,8 @@ func (s *Store) GetDatabases(ctx context.Context) ([]domain.Database, error) {
 				dest = append(dest, &row.MinPoolSize)
 			case "reserve_pool":
 				dest = append(dest, &row.ReservePool)
+			case "server_lifetime":
+				dest = append(dest, &row.ServerLifetime)
 			case "pool_mode":
 				dest = append(dest, &row.PoolMode)
 			case "max_connections":
@@ -293,6 +300,7 @@ func (s *Store) GetDatabases(ctx context.Context) ([]domain.Database, error) {
 			CurrentConnections: row.CurrentConnections,
 			Paused:             row.Paused,
 			Disabled:           row.Disabled,
+			ServerLifetime:     row.ServerLifetime,
 		})
 	}
 
@@ -316,7 +324,7 @@ func (s *Store) GetLists(ctx context.Context) ([]domain.List, error) {
 	var lists []domain.List
 
 	for rows.Next() {
-		dest := make([]interface{}, 0, len(columns))
+		dest := make([]any, 0, len(columns))
 
 		for _, column := range columns {
 			switch column {
